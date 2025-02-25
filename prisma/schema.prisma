@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = env("postgresql://postgres:secret@localhost:5433/Rajeh?schema=public")
+  url      = env("postgresql://azmi:123456@localhost:5433/rajeh?schema=public")
 }
 
 generator client {
