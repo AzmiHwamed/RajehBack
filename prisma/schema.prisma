@@ -1,0 +1,80 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  password        String
+  role            UserRole
+  parentId        String?    // Only for CHILD users
+  screenTimeLimit Int?       // Optional for CHILD users
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Self-relation: a parent can have many children
+  children        User[]     @relation("ParentChild")
+  parent          User?      @relation("ParentChild", fields: [parentId], references: [id])
+  
+  // Optional one-to-one relation with Character (only for CHILD users)
+  character       Character?
+}
+
+enum UserRole {
+  ADMIN
+  PARENT
+  CHILD
+}
+
+model Podcast {
+  id          String @id @default(uuid())
+  title       String
+  description String
+  audioUrl    String
+  quiz        Quiz   @relation("PodcastQuiz", fields: [quizId], references: [id])
+  quizId      String @unique()
+}
+
+model Story {
+  id      String @id @default(uuid())
+  title   String
+  content String
+  quiz    Quiz   @relation("StoryQuiz", fields: [quizId], references: [id])
+  quizId  String @unique()
+}
+
+model Quiz {
+  id        String     @id @default(uuid())
+  title     String
+  questions Question[]
+  // Opposite relations for Podcast and Story quizzes
+  podcast   Podcast?   @relation("PodcastQuiz")
+  story     Story?     @relation("StoryQuiz")
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  questionText  String
+  // For simplicity, storing options as JSON.
+  options       Json
+  correctAnswer String
+  quiz          Quiz    @relation(fields: [quizId], references: [id])
+  quizId        String
+}
+
+// New model to store the character configuration for a CHILD user
+model Character {
+  id     String @id @default(uuid())
+  head   String // URL for head image
+  body   String // URL for body image
+  feet   String // URL for feet image
+  
+  // One-to-one relation with a User.
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
